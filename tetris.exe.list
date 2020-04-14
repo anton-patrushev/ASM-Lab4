@@ -2,7 +2,7 @@ EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
  
 tetris.exe -- emu8086 assembler version: 4.05  
  
-[ 14-Apr-20  --  00:21:49 ] 
+[ 14-Apr-20  --  12:38:11 ] 
  
 ===================================================================================================
 [LINE]     LOC: MACHINE CODE                          SOURCE
@@ -13,47 +13,47 @@ tetris.exe -- emu8086 assembler version: 4.05
 [   3]        :                                       
 [   4]        :                                       .data
 [   5]    0100: 01                                    	NEW_ITEM db 1 ;flag for creating new item
-[   6]    0101: 00                                    RANDOM_NUMBER db 0
-[   7]    0102: 00                                    ITEM_HEIGHT db 0
-[   8]    0103: 00                                    ITEM_WIDTH db 0
-[   9]    0104: 00                                    ITEM_X db 0
-[  10]    0105: 00                                    ITEM_Y db 0
-[  11]        :                                       
+[   6]    0101: 00                                    	RANDOM_NUMBER db 0
+[   7]    0102: 00                                    	ITEM_HEIGHT db 0
+[   8]    0103: 00                                    	ITEM_WIDTH db 0
+[   9]    0104: 00                                    	ITEM_X db 0
+[  10]    0105: 00                                    	ITEM_Y db 0
+[  11]        :                                       		
 [  12]    0106: 35 00                                 	BLACK_SYMBOL db 35h,0      ;black character on black background
 [  13]    0108: 38 11                                 	BLUE_SYMBOL db 38h,11h     ;blue character on blue background
 [  14]    010A: 30 77                                 	GRAY_SYMBOL db 30h,77h     ;gray character in gray background, attribute 0111 0111
 [  15]    010C: 23                                    	ITEM_CHAR db 23h
 [  16]    010D: 44                                    	RED_ATTRIBUTE db 44h
 [  17]    010E: 00 00                                 	TEMP_SYMBOL dw 0
-[  18]    0110: 00 00                                 ELAPSED_TIME dw 0
+[  18]    0110: 00 00                                 	ELAPSED_TIME dw 0
 [  19]        :                                       .code
-[  20]    0120: E9 33 02                              jmp start
+[  20]    0120: E9 8F 02                              jmp start
 [  21]        :                                       
 [  22]        :                                       init macro
-[  23]        :                                       RIGHT_KEY equ 4Dh
-[  24]        :                                       LEFT_KEY equ 4Bh
-[  25]        :                                       UP_KEY equ 48h
-[  26]        :                                       DOWN_KEY equ 50h
+[  23]        :                                       	RIGHT_KEY equ 4Dh
+[  24]        :                                       	LEFT_KEY equ 4Bh
+[  25]        :                                       	UP_KEY equ 48h
+[  26]        :                                       	DOWN_KEY equ 50h
 [  27]        :                                       
 [  28]        :                                       	_SCREEN_WIDTH_ equ 50h
 [  29]        :                                       	SCREEN_WIDTH equ 0A0h       ;screen width in bytes (dec: 80 x 2 = 160)
-[  30]        :                                       SCREEN_HEIGHT equ 19h       ;screen height in characters (dec: 25)
-[  31]        :                                       
-[  32]        :                                       DELAY equ 2
+[  30]        :                                       	SCREEN_HEIGHT equ 19h       ;screen height in characters (dec: 25)
+[  31]        :                                       	
+[  32]        :                                       	DELAY equ 3
 [  33]        :                                       	FACTOR equ 2
 [  34]        :                                       
 [  35]        :                                       	LEFT_LIMIT equ 1
-[  36]        :                                       	RIGHT_LIMIT equ 18
+[  36]        :                                       	RIGHT_LIMIT equ 19
 [  37]        :                                       	
 [  38]        :                                       	mov ax, data
-[  39]        :                                       	mov ds, ax
+[  39]        :                                       	  mov ds, ax
 [  40]        :                                       
 [  41]        :                                       	mov ah,00h
-[  42]        :                                       	mov al,3
-[  43]        :                                       	int 10h
+[  42]        :                                       	  mov al,3
+[  43]        :                                       	  int 10h
 [  44]        :                                       
-[  45]        :                                       	mov ax,0B800h
-[  46]        :                                       	mov es,ax
+[  45]        :                                       	  mov ax,0B800h
+[  46]        :                                       	  mov es,ax
 [  47]        :                                       endm
 [  48]        :                                       
 [  49]    0123:                                       random proc ;generate random number from 0 to 2 in store it in RANDOM_NUMBER
@@ -70,66 +70,66 @@ tetris.exe -- emu8086 assembler version: 4.05
 [  60]        :                                       endp
 [  61]        :                                       
 [  62]    0137:                                       print_rect proc        ; accepts X and Y - initial coordinates, width, height of the rectangle, char and attribute in one parameter
-[  63]    0137: 55                                    	push bp
-[  64]    0138: 8B EC                                 	mov bp, sp
+[  63]    0137: 55                                    	  push bp
+[  64]    0138: 8B EC                                 	  mov bp, sp
 [  65]        :                                       
-[  66]        :                                       	; now [bp + 2] = call ret adress
-[  67]        :                                       ; [bp + 4] = symbol
-[  68]        :                                       ; [bp + 6] = height
-[  69]        :                                       	; [bp + 8] = width
-[  70]        :                                       	; [bp + 10] = y
-[  71]        :                                       	; [bp + 12] = x
+[  66]        :                                       	  ; now [bp + 2] = call ret adress
+[  67]        :                                       	; [bp + 4] = symbol
+[  68]        :                                       	; [bp + 6] = height
+[  69]        :                                       	  ; [bp + 8] = width
+[  70]        :                                       	  ; [bp + 10] = y
+[  71]        :                                       	  ; [bp + 12] = x
 [  72]        :                                       
-[  73]    013A: 50                                    	push ax
-[  74]    013B: 53                                    	push bx
-[  75]    013C: 51                                    	push cx
-[  76]    013D: 52                                    	push dx
-[  77]    013E: 57                                    	push di
+[  73]    013A: 50                                    	  push ax
+[  74]    013B: 53                                    	  push bx
+[  75]    013C: 51                                    	  push cx
+[  76]    013D: 52                                    	  push dx
+[  77]    013E: 57                                    	  push di
 [  78]        :                                       
-[  79]    013F: 8B 46 0A                              	mov ax, [bp + 10] ; y
-[  80]    0142: 8B 5E 0C                              	mov bx, [bp + 12] ; x
-[  81]    0145: E8 A6 00                              	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
-[  82]    0148: 8B FA                                 	mov di, dx
-[  83]        :                                       
-[  84]    014A: 8B 46 04                              	mov ax, [bp + 4] ; ax = ascii char + attribute
-[  85]    014D: 8B 4E 06                              	mov cx, [bp + 6] ; cx = height
-[  86]        :                                       
-[  87]    0150:                                       	print_rect_loop:
-[  88]    0150: 51                                    	push cx
-[  89]    0151: 8B 4E 08                              	mov cx, [bp + 8] ; cx = width
+[  79]    013F: 8B 46 0A                              	  mov ax, [bp + 10] ; y
+[  80]    0142: 8B 5E 0C                              	  mov bx, [bp + 12] ; x
+[  81]    0145: E8 A6 00                              	  call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+[  82]    0148: 8B FA                                 	  mov di, dx
+[  83]        :                                       	
+[  84]    014A: 8B 46 04                              	  mov ax, [bp + 4] ; ax = ascii char + attribute
+[  85]    014D: 8B 4E 06                              	  mov cx, [bp + 6] ; cx = height
+[  86]        :                                       	
+[  87]    0150:                                       	  print_rect_loop:
+[  88]    0150: 51                                    		push cx
+[  89]    0151: 8B 4E 08                              		mov cx, [bp + 8] ; cx = width
 [  90]        :                                       
-[  91]    0154: 57                                    	push di
-[  92]    0155: F3 AB                                 	rep stosw
-[  93]    0157: 5F                                    	pop di
-[  94]        :                                       
-[  95]    0158: 81 C7 A0 00                           	add di, SCREEN_WIDTH
-[  96]        :                                       
-[  97]    015C: 59                                    	pop cx
-[  98]    015D: E2 F1                                 	loop print_rect_loop
-[  99]        :                                       
-[ 100]    015F: 5F                                    	pop di
-[ 101]    0160: 5A                                    	pop dx
-[ 102]    0161: 59                                    	pop cx
-[ 103]    0162: 5B                                    	pop bx
-[ 104]    0163: 58                                    	pop ax
-[ 105]    0164: 5D                                    	pop bp
-[ 106]    0165: C3                                    	ret
+[  91]    0154: 57                                    		push di
+[  92]    0155: F3 AB                                 		rep stosw
+[  93]    0157: 5F                                    		pop di
+[  94]        :                                       	
+[  95]    0158: 81 C7 A0 00                           		add di, SCREEN_WIDTH
+[  96]        :                                       	
+[  97]    015C: 59                                    		pop cx
+[  98]    015D: E2 F1                                 	  loop print_rect_loop
+[  99]        :                                       	
+[ 100]    015F: 5F                                    	  pop di
+[ 101]    0160: 5A                                    	  pop dx
+[ 102]    0161: 59                                    	  pop cx
+[ 103]    0162: 5B                                    	  pop bx
+[ 104]    0163: 58                                    	  pop ax
+[ 105]    0164: 5D                                    	  pop bp
+[ 106]    0165: C3                                    	  ret
 [ 107]        :                                       endp
 [ 108]        :                                       
 [ 109]        :                                       call_print_rect macro x, y, width, height, symbol
-[ 110]        :                                       	push x                 ;X coordinate
-[ 111]        :                                       	push y                 ;Y coordinate
-[ 112]        :                                       	push width             ;width of the rectangle
-[ 113]        :                                       	push height            ;height of the rectangle
-[ 114]        :                                       	push word ptr symbol   ;char with attribute
+[ 110]        :                                       	  push x                 ;X coordinate
+[ 111]        :                                       	  push y                 ;Y coordinate
+[ 112]        :                                       	  push width             ;width of the rectangle
+[ 113]        :                                       	  push height            ;height of the rectangle
+[ 114]        :                                       	  push word ptr symbol   ;char with attribute
 [ 115]        :                                       
-[ 116]        :                                       	call print_rect
+[ 116]        :                                       	 call print_rect
 [ 117]        :                                       
-[ 118]        :                                       	pop dx
-[ 119]        :                                       	pop dx
-[ 120]        :                                       	pop dx
-[ 121]        :                                       	pop dx
-[ 122]        :                                       	pop dx
+[ 118]        :                                       	  pop dx
+[ 119]        :                                       	  pop dx
+[ 120]        :                                       	  pop dx
+[ 121]        :                                       	  pop dx
+[ 122]        :                                       	  pop dx
 [ 123]        :                                       endm
 [ 124]        :                                       
 [ 125]    0166:                                       print_current_item proc
@@ -157,59 +157,59 @@ tetris.exe -- emu8086 assembler version: 4.05
 [ 146]    0195: 8B EC                                 	mov bp, sp
 [ 147]        :                                       	
 [ 148]        :                                       	; [bp + 2] = call ret adress
-[ 149]        :                                       ; [bp + 4] = height
-[ 150]        :                                       	; [bp + 6] = width
-[ 151]        :                                       	; [bp + 8] = y
+[ 149]        :                                       	; [bp + 4] = height
+[ 150]        :                                       	  ; [bp + 6] = width
+[ 151]        :                                       	  ; [bp + 8] = y
 [ 152]        :                                       	; [bp + 10] = x
 [ 153]        :                                       	
-[ 154]    0197: 50                                    	push ax
-[ 155]    0198: 53                                    	push bx
-[ 156]    0199: 51                                    	push cx
-[ 157]    019A: 52                                    	push dx
-[ 158]    019B: 57                                    	push di
+[ 154]    0197: 50                                    	  push ax
+[ 155]    0198: 53                                    	  push bx
+[ 156]    0199: 51                                    	  push cx
+[ 157]    019A: 52                                    	  push dx
+[ 158]    019B: 57                                    	  push di
 [ 159]        :                                       
-[ 160]    019C: 8B 46 08                              	mov ax, [bp + 8] ; y
-[ 161]    019F: 8B 5E 0A                              	mov bx, [bp + 10] ; x
-[ 162]    01A2: E8 49 00                              	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
-[ 163]    01A5: 8B FA                                 	mov di, dx
-[ 164]        :                                       
-[ 165]    01A7: 3E 8B 06 06 00                        	mov ax, word ptr ds:[BLACK_SYMBOL]; ax = ascii char + attribute
-[ 166]    01AC: 8B 4E 04                              	mov cx, [bp + 4] ; cx = height
-[ 167]        :                                       
-[ 168]    01AF:                                       	clear_rect_loop:
-[ 169]    01AF: 51                                    	push cx
-[ 170]    01B0: 8B 4E 06                              	mov cx, [bp + 6] ; cx = width
+[ 160]    019C: 8B 46 08                              	  mov ax, [bp + 8] ; y
+[ 161]    019F: 8B 5E 0A                              	  mov bx, [bp + 10] ; x
+[ 162]    01A2: E8 49 00                              	  call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+[ 163]    01A5: 8B FA                                 	  mov di, dx
+[ 164]        :                                       	
+[ 165]    01A7: 3E 8B 06 06 00                        	  mov ax, word ptr ds:[BLACK_SYMBOL]; ax = ascii char + attribute
+[ 166]    01AC: 8B 4E 04                              	  mov cx, [bp + 4] ; cx = height
+[ 167]        :                                       	
+[ 168]    01AF:                                       	  clear_rect_loop:
+[ 169]    01AF: 51                                    		push cx
+[ 170]    01B0: 8B 4E 06                              		mov cx, [bp + 6] ; cx = width
 [ 171]        :                                       
-[ 172]    01B3: 57                                    	push di
-[ 173]    01B4: F3 AB                                 	rep stosw
-[ 174]    01B6: 5F                                    	pop di
-[ 175]        :                                       
-[ 176]    01B7: 81 C7 A0 00                           	add di, SCREEN_WIDTH
-[ 177]        :                                       
-[ 178]    01BB: 59                                    	pop cx
-[ 179]    01BC: E2 F1                                 	loop clear_rect_loop
-[ 180]        :                                       
-[ 181]    01BE: 5F                                    	pop di
-[ 182]    01BF: 5A                                    	pop dx
-[ 183]    01C0: 59                                    	pop cx
-[ 184]    01C1: 5B                                    	pop bx
-[ 185]    01C2: 58                                    	pop ax
+[ 172]    01B3: 57                                    		push di
+[ 173]    01B4: F3 AB                                 		rep stosw
+[ 174]    01B6: 5F                                    		pop di
+[ 175]        :                                       	
+[ 176]    01B7: 81 C7 A0 00                           		add di, SCREEN_WIDTH
+[ 177]        :                                       	
+[ 178]    01BB: 59                                    		pop cx
+[ 179]    01BC: E2 F1                                 	  loop clear_rect_loop
+[ 180]        :                                       	
+[ 181]    01BE: 5F                                    	  pop di
+[ 182]    01BF: 5A                                    	  pop dx
+[ 183]    01C0: 59                                    	  pop cx
+[ 184]    01C1: 5B                                    	  pop bx
+[ 185]    01C2: 58                                    	  pop ax
 [ 186]    01C3: 5D                                    	pop bp
 [ 187]    01C4: C3                                    	ret
 [ 188]        :                                       endp
 [ 189]        :                                       
 [ 190]        :                                       call_clear_rect macro x, y, width, height
 [ 191]        :                                       	push x                 ;X coordinate
-[ 192]        :                                       	push y                 ;Y coordinate
-[ 193]        :                                       	push width             ;width of the rectangle
-[ 194]        :                                       	push height            ;height of the rectangle
+[ 192]        :                                       	  push y                 ;Y coordinate
+[ 193]        :                                       	  push width             ;width of the rectangle
+[ 194]        :                                       	  push height            ;height of the rectangle
 [ 195]        :                                       
-[ 196]        :                                       	call clear_rect
+[ 196]        :                                       	 call clear_rect
 [ 197]        :                                       
-[ 198]        :                                       	pop dx
-[ 199]        :                                       	pop dx
-[ 200]        :                                       	pop dx
-[ 201]        :                                       	pop dx
+[ 198]        :                                       	  pop dx
+[ 199]        :                                       	  pop dx
+[ 200]        :                                       	  pop dx
+[ 201]        :                                       	  pop dx
 [ 202]        :                                       endm
 [ 203]        :                                       
 [ 204]    01C5:                                       clear_current_item proc
@@ -233,62 +233,62 @@ tetris.exe -- emu8086 assembler version: 4.05
 [ 222]        :                                       
 [ 223]        :                                       ; done
 [ 224]    01EE:                                       convert_to_offset proc       ;accepts Y in ax, X in bx. returns offset in DX
-[ 225]    01EE: 51                                    push cx
-[ 226]    01EF: 53                                    push bx
-[ 227]        :                                       
-[ 228]    01F0: B1 A0                                 mov cl, SCREEN_WIDTH ;ScreenWidth = 80x2=160
-[ 229]    01F2: F6 E1                                 mul cl ; ax = y * ScreenWidth
-[ 230]    01F4: 8B D0                                 mov dx, ax ; dx = `y` * 80x2
-[ 231]        :                                       
-[ 232]    01F6: 8B C3                                 mov ax, bx
-[ 233]    01F8: BB 02 00                              mov bx, FACTOR
-[ 234]    01FB: 52                                    push dx
-[ 235]    01FC: F7 E3                                 mul bx ; ax = `x` * 2
-[ 236]    01FE: 5A                                    pop dx
-[ 237]    01FF: 03 D0                                 add dx, ax ; dx contain offset
-[ 238]        :                                       
-[ 239]    0201: 5B                                    pop bx
-[ 240]    0202: 59                                    pop cx
-[ 241]    0203: C3                                    ret
+[ 225]    01EE: 51                                    	push cx
+[ 226]    01EF: 53                                    	push bx
+[ 227]        :                                       	
+[ 228]    01F0: B1 A0                                 	mov cl, SCREEN_WIDTH ;ScreenWidth = 80x2=160
+[ 229]    01F2: F6 E1                                 	mul cl ; ax = y * ScreenWidth
+[ 230]    01F4: 8B D0                                 	mov dx, ax ; dx = `y` * 80x2
+[ 231]        :                                       	
+[ 232]    01F6: 8B C3                                 	mov ax, bx
+[ 233]    01F8: BB 02 00                              	mov bx, FACTOR
+[ 234]    01FB: 52                                    	push dx
+[ 235]    01FC: F7 E3                                 	mul bx ; ax = `x` * 2
+[ 236]    01FE: 5A                                    	pop dx
+[ 237]    01FF: 03 D0                                 	add dx, ax ; dx contain offset
+[ 238]        :                                       	
+[ 239]    0201: 5B                                    	pop bx
+[ 240]    0202: 59                                    	pop cx
+[ 241]    0203: C3                                    	ret
 [ 242]        :                                       endp
 [ 243]        :                                       
 [ 244]        :                                       ; done
 [ 245]    0204:                                       print_layout proc       ; prints the field
-[ 246]        :                                       ; call macro-wrappers
-[ 247]    0204: 6A 01 6A 00 6A 13 6A 01 FF 36 0A 00   	call_print_rect 1, 0, 19, 1, GRAY_SYMBOL ; top
+[ 246]        :                                       	; call macro-wrappers
+[ 247]    0204: 6A 01 6A 00 6A 13 6A 01 FF 36 0A 00   	  call_print_rect 1, 0, 19, 1, GRAY_SYMBOL ; top
                 E8 24 FF 5A 5A 5A 5A 5A             
-[ 248]    0218: 6A 00 6A 00 6A 01 6A 18 FF 36 0A 00   	call_print_rect 0, 0, 1, 24, GRAY_SYMBOL ; left
+[ 248]    0218: 6A 00 6A 00 6A 01 6A 18 FF 36 0A 00   	  call_print_rect 0, 0, 1, 24, GRAY_SYMBOL ; left
                 E8 10 FF 5A 5A 5A 5A 5A             
-[ 249]    022C: 6A 13 6A 01 6A 01 6A 18 FF 36 0A 00   	call_print_rect 19, 1, 1, 24, GRAY_SYMBOL ; right
+[ 249]    022C: 6A 13 6A 01 6A 01 6A 18 FF 36 0A 00   	  call_print_rect 19, 1, 1, 24, GRAY_SYMBOL ; right
                 E8 FC FE 5A 5A 5A 5A 5A             
-[ 250]    0240: 6A 00 6A 18 6A 13 6A 01 FF 36 0A 00   	call_print_rect 0, 24, 19, 1, GRAY_SYMBOL ; bottom
+[ 250]    0240: 6A 00 6A 18 6A 13 6A 01 FF 36 0A 00   	  call_print_rect 0, 24, 19, 1, GRAY_SYMBOL ; bottom
                 E8 E8 FE 5A 5A 5A 5A 5A             
 [ 251]        :                                       
-[ 252]    0254: C3                                    	ret
+[ 252]    0254: C3                                    	 ret
 [ 253]        :                                       endp
 [ 254]        :                                       
 [ 255]        :                                       clear_screen macro
-[ 256]        :                                       mov ah, 0h
-[ 257]        :                                       mov al, 3h
-[ 258]        :                                       int 10h
+[ 256]        :                                       	mov ah, 0h
+[ 257]        :                                       	mov al, 3h
+[ 258]        :                                       	int 10h
 [ 259]        :                                       endm
 [ 260]        :                                       
 [ 261]        :                                       exit macro
-[ 262]        :                                       clear_screen
-[ 263]        :                                       	mov ax, 4c00h
-[ 264]        :                                       	int 21h
+[ 262]        :                                       	clear_screen
+[ 263]        :                                       	  mov ax, 4c00h
+[ 264]        :                                       	  int 21h
 [ 265]        :                                       endm
 [ 266]        :                                       
 [ 267]    0255:                                       app proc
 [ 268]    0255: B4 00                                 	mov ah, 0 ;get ticks count
-[ 269]    0257: CD 1A                                 int 1Ah ;cx - higher byte, dx - lower one
-[ 270]        :                                       
-[ 271]    0259: 33 C9                                 xor cx, cx
-[ 272]    025B: 3E 3B 16 10 00                        cmp dx, word ptr ds:[ELAPSED_TIME]
+[ 269]    0257: CD 1A                                 	int 1Ah ;cx - higher byte, dx - lower one
+[ 270]        :                                       	
+[ 271]    0259: 33 C9                                 	xor cx, cx
+[ 272]    025B: 3E 3B 16 10 00                        	cmp dx, word ptr ds:[ELAPSED_TIME]
 [ 273]    0260: 72 16                                 	jb skip_app_iteration
 [ 274]        :                                       	
-[ 275]    0262: 83 C2 02                              	add dx, DELAY
-[ 276]    0265: 3E 89 16 10 00                        mov word ptr ds:[ELAPSED_TIME], dx
+[ 275]    0262: 83 C2 03                              	add dx, DELAY
+[ 276]    0265: 3E 89 16 10 00                        	mov word ptr ds:[ELAPSED_TIME], dx
 [ 277]        :                                       	
 [ 278]    026A: 3E 80 3E 00 00 00                     	cmp byte ptr ds:[NEW_ITEM], 0
 [ 279]    0270: 74 03                                 	je app_skip_drawing
@@ -343,37 +343,37 @@ tetris.exe -- emu8086 assembler version: 4.05
 [ 327]        :                                       endp
 [ 328]        :                                       
 [ 329]    02D8:                                       check_input proc 	;reads pressed key
-[ 330]    02D8: 50                                    push ax
-[ 331]        :                                       
-[ 332]    02D9: B4 01                                 mov ah, 1 	;check for key pressed
-[ 333]    02DB: CD 16                                 int 16h 	;keyboard interrupt
-[ 334]        :                                       
-[ 335]    02DD: 74 04                                 jz end_check_input 	;if zf=1 - key not pressed
-[ 336]        :                                       
-[ 337]    02DF: B4 00                                 mov ah, 0 	;get key
-[ 338]    02E1: CD 16                                 int 16h 	;read key
-[ 339]        :                                       
+[ 330]    02D8: 50                                    	push ax
+[ 331]        :                                       	
+[ 332]    02D9: B4 01                                 	mov ah, 1 	;check for key pressed
+[ 333]    02DB: CD 16                                 	int 16h 	;keyboard interrupt
+[ 334]        :                                       	
+[ 335]    02DD: 74 04                                 	jz end_check_input 	;if zf=1 - key not pressed
+[ 336]        :                                       	
+[ 337]    02DF: B4 00                                 	mov ah, 0 	;get key
+[ 338]    02E1: CD 16                                 	int 16h 	;read key
+[ 339]        :                                       	
 [ 340]    02E3:                                       	end_check_input:
 [ 341]        :                                       
 [ 342]    02E3: 80 FC 4B 74 16 80 FC 4D 74 11 80 FC   	perfom_action
-                48 74 07 80 FC 50 74 0C 75 05 E8 0E 
-                00 EB 0A E8 0A 00 EB 05 E8 4F 00 EB 
+                48 74 07 80 FC 50 74 0C 75 05 E8 58 
+                00 EB 0A E8 54 00 EB 05 E8 AB 00 EB 
                 00                                  
-[ 343]    0308: 58                                    pop ax
+[ 343]    0308: 58                                    	pop ax
 [ 344]    0309: C3                                    	ret
 [ 345]        :                                       endp
 [ 346]        :                                       
 [ 347]        :                                       perfom_action macro ;accept scan_code in `ah`
 [ 348]        :                                       	cmp ah, LEFT_KEY ;compare scan code
-[ 349]        :                                       je call_move_item
-[ 350]        :                                       
-[ 351]        :                                       cmp ah, RIGHT_KEY
-[ 352]        :                                       je call_move_item
-[ 353]        :                                       
-[ 354]        :                                       cmp ah, UP_KEY
-[ 355]        :                                       je call_rotate_item
-[ 356]        :                                       
-[ 357]        :                                       cmp ah, DOWN_KEY
+[ 349]        :                                       	je call_move_item
+[ 350]        :                                       	
+[ 351]        :                                       	cmp ah, RIGHT_KEY
+[ 352]        :                                       	je call_move_item
+[ 353]        :                                       	
+[ 354]        :                                       	cmp ah, UP_KEY
+[ 355]        :                                       	je call_rotate_item
+[ 356]        :                                       	
+[ 357]        :                                       	cmp ah, DOWN_KEY
 [ 358]        :                                       	je call_drop_item
 [ 359]        :                                       	jne call_move_item
 [ 360]        :                                       
@@ -392,72 +392,130 @@ tetris.exe -- emu8086 assembler version: 4.05
 [ 373]        :                                       	end_perfom_action:
 [ 374]        :                                       endm
 [ 375]        :                                       
-[ 376]    030A:                                       rotate_item proc ;accept scan_code in `ah`
-[ 377]        :                                       	;rotate
-[ 378]    030A: C3                                    	ret
-[ 379]        :                                       endp
+[ 376]    030A:                                       check_for_borders proc
+[ 377]    030A: 50                                    	push ax
+[ 378]    030B: 53                                    	push bx
+[ 379]    030C: 51                                    	push cx
 [ 380]        :                                       
-[ 381]    030B:                                       move_item proc ;accept scan_code in `ah`
-[ 382]    030B: E8 B7 FE                              	call clear_current_item
-[ 383]        :                                       
-[ 384]    030E: 80 FC 4B                              	cmp ah, LEFT_KEY
-[ 385]    0311: 74 07                                 	je move_item_left
-[ 386]        :                                       	
-[ 387]    0313: 80 FC 4D                              	cmp ah, RIGHT_KEY
-[ 388]    0316: 74 12                                 	je move_item_right
-[ 389]        :                                       
-[ 390]    0318: EB 31                                 	jmp move_item_down
-[ 391]        :                                       
-[ 392]    031A:                                       	move_item_left:
-[ 393]    031A: 3E 80 3E 04 00 01                     		cmp byte ptr ds:[ITEM_X], LEFT_LIMIT
-[ 394]    0320: 76 29                                 		jbe move_item_down
-[ 395]    0322: 3E 80 2E 04 00 01                     		sub byte ptr ds:[ITEM_X], 1
-[ 396]    0328: EB 21                                 		jmp move_item_down
-[ 397]        :                                       
-[ 398]    032A:                                       	move_item_right:
-[ 399]    032A: 52                                    		push dx
-[ 400]    032B: 53                                    		push bx
-[ 401]    032C: 33 D2                                 		xor dx, dx
-[ 402]    032E: 33 DB                                 		xor bx, bx
-[ 403]        :                                       
-[ 404]    0330: 3E 8A 16 04 00                        		mov dl, byte ptr ds:[ITEM_X]
-[ 405]    0335: 3E 8A 1E 03 00                        		mov bl, byte ptr ds:[ITEM_WIDTH]
-[ 406]    033A: 03 D3                                 		add dx, bx
-[ 407]        :                                       
-[ 408]    033C: 83 FA 12                              		cmp dx, RIGHT_LIMIT
-[ 409]    033F: 5B                                    		pop bx
-[ 410]    0340: 5A                                    		pop dx
-[ 411]    0341: 73 08                                 		jae move_item_down
-[ 412]    0343: 3E 80 06 04 00 01                     		add byte ptr ds:[ITEM_X], 1
-[ 413]    0349: EB 00                                 		jmp move_item_down		
-[ 414]        :                                       
-[ 415]    034B:                                       	move_item_down:
-[ 416]    034B: 3E 80 06 05 00 01                     		add byte ptr ds:[ITEM_Y], 1
-[ 417]        :                                       
-[ 418]    0351: E8 12 FE                              		call print_current_item
-[ 419]        :                                       
-[ 420]    0354:                                       	end_move_item:
-[ 421]    0354: C3                                    	ret
-[ 422]        :                                       endp
-[ 423]        :                                       
-[ 424]    0355:                                       drop_item proc ;accept scan_code in `ah`
-[ 425]        :                                       	;move_item
-[ 426]    0355: C3                                    	ret
-[ 427]        :                                       endp
-[ 428]        :                                       			
-[ 429]    0356:                                       start proc
-[ 430]    0356: B8 10 00 8E D8 B4 00 B0 03 CD 10 B8   	init
-                00 B8 8E C0                         
-[ 431]    0366: E8 9B FE                              	call print_layout
-[ 432]    0369:                                       game_loop: ;endless loop
-[ 433]    0369: E8 E9 FE                              call app
-[ 434]    036C: EB FB                                 jmp game_loop
-[ 435]        :                                       
-[ 436]    036E: B4 00 B0 03 CD 10 B8 00 4C CD 21      	exit
-[ 437]    0379: C3                                    	ret
-[ 438]        :                                       endp
+[ 381]    030D: 33 C0                                 	xor ax, ax
+[ 382]    030F: 33 DB                                 	xor bx, bx
+[ 383]    0311: 33 C9                                 	xor cx, cx
+[ 384]        :                                       
+[ 385]    0313: 3E A0 05 00                           	mov al, ds:[ITEM_Y] ; y
+[ 386]    0317: 3E 8A 1E 04 00                        	mov bl, ds:[ITEM_X] ; x
+[ 387]    031C: E8 CF FE                              	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+[ 388]        :                                       	
+[ 389]    031F: 8B DA                                 	mov bx, dx
+[ 390]    0321: 33 D2                                 	xor dx, dx
+[ 391]        :                                       	
+[ 392]    0323: 3E 8A 0E 02 00                        	mov cl, byte ptr ds:[ITEM_HEIGHT]
+[ 393]    0328:                                       	check_for_borders_height_loop:
+[ 394]    0328: 81 C3 A0 00                           		add bx, SCREEN_WIDTH
+[ 395]    032C: E2 FA                                 	loop check_for_borders_height_loop
+[ 396]        :                                       
+[ 397]    032E: 3E 8A 0E 03 00                        	mov cl, byte ptr ds:[ITEM_WIDTH]
+[ 398]    0333:                                       	check_for_borders_width_loop:
+[ 399]    0333: 3E 8B 06 0A 00                        		mov ax, word ptr ds:[GRAY_SYMBOL]
+[ 400]    0338: 26 3B 07                              		cmp ax, word ptr es:[bx]
+[ 401]    033B: 74 10                                 		je check_for_borders_success
+[ 402]        :                                       
+[ 403]    033D: 3E A0 0C 00                           		mov al, byte ptr ds:[ITEM_CHAR]
+[ 404]    0341: 26 3A 07                              		cmp al, byte ptr es:[bx]
+[ 405]    0344: 74 07                                 		je check_for_borders_success
+[ 406]        :                                       
+[ 407]    0346: 83 C3 02                              		add bx, 2
+[ 408]    0349: E2 E8                                 	loop check_for_borders_width_loop
+[ 409]    034B: EB 03                                 	jmp end_check_for_borders
+[ 410]        :                                       
+[ 411]    034D:                                       	check_for_borders_success:
+[ 412]    034D: BA 01 00                              	mov dx, 1
+[ 413]        :                                       	
+[ 414]        :                                       	
+[ 415]    0350:                                       	end_check_for_borders:
+[ 416]    0350: 59                                    	pop cx
+[ 417]    0351: 5B                                    	pop bx
+[ 418]    0352: 58                                    	pop ax
+[ 419]    0353: C3                                    	ret
+[ 420]        :                                       endp
+[ 421]        :                                       
+[ 422]    0354:                                       rotate_item proc ;accept scan_code in `ah`
+[ 423]        :                                       	;rotate
+[ 424]    0354: C3                                    	ret
+[ 425]        :                                       endp
+[ 426]        :                                       
+[ 427]    0355:                                       move_item proc ;accept scan_code in `ah`
+[ 428]    0355: E8 B2 FF                              	call check_for_borders
+[ 429]    0358: 83 FA 01                              	cmp dx, 1
+[ 430]    035B: 74 4A                                 	je create_new_item
+[ 431]        :                                       
+[ 432]    035D: E8 65 FE                              	call clear_current_item
+[ 433]        :                                       
+[ 434]    0360: 80 FC 4B                              	cmp ah, LEFT_KEY
+[ 435]    0363: 74 07                                 	je move_item_left
+[ 436]        :                                       	
+[ 437]    0365: 80 FC 4D                              	cmp ah, RIGHT_KEY
+[ 438]    0368: 74 12                                 	je move_item_right
 [ 439]        :                                       
-[ 440]        :                                       
+[ 440]    036A: EB 31                                 	jmp move_item_down
+[ 441]        :                                       
+[ 442]    036C:                                       	move_item_left:
+[ 443]    036C: 3E 80 3E 04 00 01                     		cmp byte ptr ds:[ITEM_X], LEFT_LIMIT
+[ 444]    0372: 76 29                                 		jbe move_item_down
+[ 445]    0374: 3E 80 2E 04 00 01                     		sub byte ptr ds:[ITEM_X], 1
+[ 446]    037A: EB 21                                 		jmp move_item_down
+[ 447]        :                                       
+[ 448]    037C:                                       	move_item_right:
+[ 449]    037C: 52                                    		push dx
+[ 450]    037D: 53                                    		push bx
+[ 451]    037E: 33 D2                                 		xor dx, dx
+[ 452]    0380: 33 DB                                 		xor bx, bx
+[ 453]        :                                       
+[ 454]    0382: 3E 8A 16 04 00                        		mov dl, byte ptr ds:[ITEM_X]
+[ 455]    0387: 3E 8A 1E 03 00                        		mov bl, byte ptr ds:[ITEM_WIDTH]
+[ 456]    038C: 03 D3                                 		add dx, bx
+[ 457]        :                                       
+[ 458]    038E: 83 FA 13                              		cmp dx, RIGHT_LIMIT
+[ 459]    0391: 5B                                    		pop bx
+[ 460]    0392: 5A                                    		pop dx
+[ 461]    0393: 73 08                                 		jae move_item_down
+[ 462]    0395: 3E 80 06 04 00 01                     		add byte ptr ds:[ITEM_X], 1
+[ 463]    039B: EB 00                                 		jmp move_item_down		
+[ 464]        :                                       
+[ 465]    039D:                                       move_item_down:
+[ 466]        :                                       	
+[ 467]    039D: 3E 80 06 05 00 01                     		add byte ptr ds:[ITEM_Y], 1
+[ 468]    03A3: E8 C0 FD                              		call print_current_item
+[ 469]        :                                       
+[ 470]    03A6:                                       	end_move_item:
+[ 471]    03A6: C3                                    	ret
+[ 472]        :                                       
+[ 473]    03A7:                                       	create_new_item:
+[ 474]    03A7: 5A                                    	pop dx
+[ 475]    03A8: 5B                                    	pop bx
+[ 476]    03A9: 58                                    	pop ax
+[ 477]        :                                       	
+[ 478]    03AA: 3E C6 06 00 00 01                     	mov byte ptr ds:[NEW_ITEM], 1
+[ 479]    03B0: C3                                    	ret
+[ 480]        :                                       endp
+[ 481]        :                                       
+[ 482]    03B1:                                       drop_item proc ;accept scan_code in `ah`
+[ 483]        :                                       	;move_item
+[ 484]    03B1: C3                                    	ret
+[ 485]        :                                       endp
+[ 486]        :                                       			
+[ 487]    03B2:                                       start proc
+[ 488]    03B2: B8 10 00 8E D8 B4 00 B0 03 CD 10 B8   	init
+                00 B8 8E C0                         
+[ 489]    03C2: E8 3F FE                              	call print_layout
+[ 490]    03C5:                                       	game_loop: ;endless loop
+[ 491]    03C5: E8 8D FE                              	   call app
+[ 492]    03C8: EB FB                                 	jmp game_loop
+[ 493]        :                                       
+[ 494]    03CA: B4 00 B0 03 CD 10 B8 00 4C CD 21      	exit
+[ 495]    03D5: C3                                    	ret
+[ 496]        :                                       endp
+[ 497]        :                                       
+[ 498]        :                                       
  
 ===================================================================================================
  
@@ -465,7 +523,7 @@ EXE HEADER - bytes from 0000 to 01FF inclusive.
 
 0000: 4D      -   exe signature (M)
 0001: 5A      -   exe signature (Z)
-0002: 7A      -   bytes on last page (l.byte)
+0002: D6      -   bytes on last page (l.byte)
 0003: 01      -   bytes on last page (h.byte)
 0004: 03      -   512 byte pages in file (l.byte)
 0005: 00      -   512 byte pages in file (h.byte)
@@ -481,8 +539,8 @@ EXE HEADER - bytes from 0000 to 01FF inclusive.
 000F: 00      -   SS - stack segment (h.byte)
 0010: 00      -   SP - stack pointer (l.byte)
 0011: 01      -   SP - stack pointer (h.byte)
-0012: E1      -   check sum (l.byte)
-0013: 45      -   check sum (h.byte)
+0012: BD      -   check sum (l.byte)
+0013: 94      -   check sum (h.byte)
 0014: 00      -   IP - instruction pointer (l.byte)
 0015: 00      -   IP - instruction pointer (h.byte)
 0016: 12      -   CS - code segment (l.byte)
@@ -493,7 +551,7 @@ EXE HEADER - bytes from 0000 to 01FF inclusive.
 001B: 00      -   overlay number (h.byte)
 001C: 01      -   signature (l.byte)
 001D: 00      -   signature (h.byte)
-001E: 37      -   relocation table - offset inside segment (l.byte)
+001E: 93      -   relocation table - offset inside segment (l.byte)
 001F: 02      -   relocation table - offset inside segment (h.byte)
 0020: 12      -   relocation table - segment anchor (l.byte)
 0021: 00      -   relocation table - segment anchor (h.byte)

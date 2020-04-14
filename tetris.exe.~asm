@@ -29,11 +29,11 @@ _SCREEN_WIDTH_ equ 50h
 SCREEN_WIDTH equ 0A0h       ;screen width in bytes (dec: 80 x 2 = 160)
 SCREEN_HEIGHT equ 19h       ;screen height in characters (dec: 25)
 
-DELAY equ 2
+DELAY equ 3
 FACTOR equ 2
 
 LEFT_LIMIT equ 1
-RIGHT_LIMIT equ 18
+RIGHT_LIMIT equ 19
 
 mov ax, data
 mov ds, ax
@@ -373,12 +373,62 @@ jmp end_perfom_action
 end_perfom_action:
 endm
 
+check_for_borders proc
+push ax
+push bx
+push cx
+
+xor ax, ax
+xor bx, bx
+xor cx, cx
+
+mov al, ds:[ITEM_Y] ; y
+mov bl, ds:[ITEM_X] ; x
+call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+
+mov bx, dx
+xor dx, dx
+
+mov cl, byte ptr ds:[ITEM_HEIGHT]
+check_for_borders_height_loop:
+add bx, SCREEN_WIDTH
+loop check_for_borders_height_loop
+
+mov cl, byte ptr ds:[ITEM_WIDTH]
+check_for_borders_width_loop:
+mov ax, word ptr ds:[GRAY_SYMBOL]
+cmp ax, word ptr es:[bx]
+je check_for_borders_success
+
+mov al, byte ptr ds:[ITEM_CHAR]
+cmp al, byte ptr es:[bx]
+je check_for_borders_success
+
+add bx, 2
+loop check_for_borders_width_loop
+jmp end_check_for_borders
+
+check_for_borders_success:
+mov dx, 1
+
+
+end_check_for_borders:
+pop cx
+pop bx
+pop ax
+ret
+endp
+
 rotate_item proc ;accept scan_code in `ah`
 ;rotate
 ret
 endp
 
 move_item proc ;accept scan_code in `ah`
+call check_for_borders
+cmp dx, 1
+je create_new_item
+
 call clear_current_item
 
 cmp ah, LEFT_KEY
@@ -413,11 +463,19 @@ add byte ptr ds:[ITEM_X], 1
 jmp move_item_down
 
 move_item_down:
-add byte ptr ds:[ITEM_Y], 1
 
+add byte ptr ds:[ITEM_Y], 1
 call print_current_item
 
 end_move_item:
+ret
+
+create_new_item:
+pop dx
+pop bx
+pop ax
+
+mov byte ptr ds:[NEW_ITEM], 1
 ret
 endp
 
