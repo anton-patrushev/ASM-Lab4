@@ -157,21 +157,21 @@ clear_rect proc
 	  ; [bp + 8] = y
 	; [bp + 10] = x
 	  
-	  push ax
-	  push bx  
-	  push cx
-	  push dx
-	  push di
+	push ax
+	push bx  
+	push cx
+	push dx
+	push di
   
-	  mov ax, [bp + 8] ; y
-	  mov bx, [bp + 10] ; x 
-	  call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
-	  mov di, dx
+mov ax, [bp + 8] ; y
+	mov bx, [bp + 10] ; x 
+	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+	mov di, dx
 	
-	  mov ax, word ptr ds:[BLACK_SYMBOL]; ax = ascii char + attribute
-	  mov cx, [bp + 4] ; cx = height
+	mov ax, word ptr ds:[BLACK_SYMBOL]; ax = ascii char + attribute
+	mov cx, [bp + 4] ; cx = height
 	
-	  clear_rect_loop:  
+	clear_rect_loop:  
 		push cx
 		mov cx, [bp + 6] ; cx = width
    
@@ -182,13 +182,13 @@ clear_rect proc
 		add di, SCREEN_WIDTH
 	
 		pop cx
-	  loop clear_rect_loop
+	loop clear_rect_loop
 	
-	  pop di
-	  pop dx
-	  pop cx
-	  pop bx
-	  pop ax
+	pop di
+	pop dx
+	pop cx
+	pop bx
+	pop ax
 	pop bp
 	ret
 endp
@@ -250,12 +250,12 @@ endp
 ; done
 print_layout proc       ; prints the field
 	; call macro-wrappers
-	  call_print_rect 1, 0, RIGHT_LIMIT, 1, GRAY_SYMBOL ; top
-	  call_print_rect 0, 0, 1, DOWN_LIMIT, GRAY_SYMBOL ; left
-	  call_print_rect RIGHT_LIMIT, 1, 1, DOWN_LIMIT, GRAY_SYMBOL ; right
-	  call_print_rect 0, DOWN_LIMIT, RIGHT_LIMIT, 1, GRAY_SYMBOL ; bottom
+	call_print_rect 1, 0, RIGHT_LIMIT, 1, GRAY_SYMBOL ; top
+	call_print_rect 0, 0, 1, DOWN_LIMIT, GRAY_SYMBOL ; left
+	call_print_rect RIGHT_LIMIT, 1, 1, DOWN_LIMIT, GRAY_SYMBOL ; right
+	call_print_rect 0, DOWN_LIMIT, RIGHT_LIMIT, 1, GRAY_SYMBOL ; bottom
 
-	  call_print_rect 4, 23, 17, 1, RED_SYMBOL ; bottom
+	; call_print_rect 4, 23, 17, 1, RED_SYMBOL ; mock
 	 ret
 endp  
 
