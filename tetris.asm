@@ -17,6 +17,8 @@
 	RED_ATTRIBUTE db 44h
 	TEMP_SYMBOL dw 0    
 	ELAPSED_TIME dw 0
+
+	BLOCK_ROTATE db 1
 .code
 jmp start
 
@@ -30,7 +32,7 @@ init macro
 	SCREEN_WIDTH equ 0A0h       ;screen width in bytes (dec: 80 x 2 = 160) 
 	SCREEN_HEIGHT equ 19h       ;screen height in characters (dec: 25)
 	
-	DELAY equ 3
+	DELAY equ 2
 	FACTOR equ 2 
 
 	LEFT_LIMIT equ 1
@@ -299,7 +301,7 @@ create_item proc
 	mov dh, byte ptr ds:[RED_ATTRIBUTE]
 	mov word ptr ds:[TEMP_SYMBOL], dx
 	
-	mov byte ptr ds:[ITEM_WIDTH], 5
+	mov byte ptr ds:[ITEM_WIDTH], 3
 	mov byte ptr ds:[ITEM_HEIGHT], 1
 
 	mov byte ptr ds:[ITEM_X], 8
@@ -361,6 +363,7 @@ perfom_action macro ;accept scan_code in `ah`
 
 	call_rotate_item:
 		call rotate_item
+		call print_current_item
 	
 	call_move_item:
 		call move_item
@@ -418,6 +421,139 @@ check_for_borders proc
 	ret
 endp
 
+check_rotating proc
+	push cx
+	xor cx, cx
+
+	cmp byte ptr ds:[ITEM_ROTATE], 0
+  	je check_rotating_item_initial
+
+  	cmp byte ptr ds:[ITEM_ROTATE], 1
+  	je check_rotating_item_first
+  
+  	cmp byte ptr ds:[ITEM_ROTATE], 2
+  	je check_rotating_item_second
+
+  	cmp byte ptr ds:[ITEM_ROTATE], 3
+	je check_rotating_item_third
+	
+	; _____________________0 -> 1_______________________________________
+	check_rotating_item_initial:
+	mov bl, byte ptr ds:[ITEM_WIDTH] 	;bl = h2
+	sub bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = h2 - h1
+	mov cl, bl 							;cl = h2 - h1 (iterations count)
+	
+	mov al, byte ptr ds:[ITEM_Y] 		; y
+	mov bl, byte ptr ds:[ITEM_X] 		; x
+	call convert_to_offset 				; ax = `y` & bx = 'x' => dx = calculated offset
+	mov bx, dx
+
+	mov dl, byte ptr ds:[ITEM_CHAR]
+	mov ax, word ptr ds:[GRAY_SYMBOL]
+
+	check_rotating_item_initial_loop:
+		sub bx, SCREEN_WIDTH 			; go up
+		cmp byte ptr es:[bx], dl
+		je block_rotating
+		cmp word ptr es:[bx], ax
+		je block_rotating
+	loop check_rotating_item_initial_loop
+	jmp non_block_rotating
+	
+	; _____________________1 -> 2_______________________________________
+	check_rotating_item_first:
+	mov bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = w2
+	sub bl, byte ptr ds:[ITEM_WIDTH] 	;bl = w2 - w1
+	mov cl, bl							;cl = w2 - w1 (iterations count)
+	
+	mov al, byte ptr ds:[ITEM_Y] 		; y
+	mov bl, byte ptr ds:[ITEM_X] 		; x
+	call convert_to_offset 				; ax = `y` & bx = 'x' => dx = calculated offset
+	mov bx, dx
+
+	push cx
+	mov cl, byte ptr ds:[ITEM_HEIGHT]
+	dec cl
+	_check_rotating_item_first_loop:
+		add bx, SCREEN_WIDTH ;go down
+	loop _check_rotating_item_first_loop
+	pop cx
+
+	mov dl, byte ptr ds:[ITEM_CHAR]
+	mov ax, word ptr ds:[GRAY_SYMBOL]
+
+	check_rotating_item_first_loop:
+		sub bx, 2 						; go left
+		cmp byte ptr es:[bx], dl
+		je block_rotating
+		cmp word ptr es:[bx], ax
+		je block_rotating
+	loop check_rotating_item_first_loop
+	jmp non_block_rotating
+  
+	; _____________________2 -> 3_______________________________________
+	check_rotating_item_second:
+	mov bl, byte ptr ds:[ITEM_WIDTH] 	;bl = h2
+	sub bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = h2 - h1
+	mov cl, bl							;cl = h2 - h1 (iterations count)
+
+	mov bl, byte ptr ds:[ITEM_X] 		; x
+	mov al, byte ptr ds:[ITEM_WIDTH]
+	dec al
+	mov dl, 2
+	mul dl
+
+	add bx, ax
+	xor ax, ax
+	mov al, byte ptr ds:[ITEM_Y] 		; y
+	call convert_to_offset 				; ax = `y` & bx = 'x' => dx = calculated offset
+	mov bx, dx
+
+	mov dl, byte ptr ds:[ITEM_CHAR]
+	mov ax, word ptr ds:[GRAY_SYMBOL]
+	check_rotating_item_second_loop:
+		sub bx, SCREEN_WIDTH 			; go down
+		cmp byte ptr es:[bx], dl
+		je block_rotating
+		cmp word ptr es:[bx], ax
+		je block_rotating
+	loop check_rotating_item_second_loop
+	jmp non_block_rotating
+  
+	; _____________________3 -> 0_______________________________________
+	check_rotating_item_third:
+	mov bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = w2
+	sub bl, byte ptr ds:[ITEM_WIDTH] 	;bl = w2 - w1
+	mov cl, bl							;cl = w2 - w1 (iterations count)
+
+	mov al, byte ptr ds:[ITEM_Y] 		; y
+	mov bl, byte ptr ds:[ITEM_X] 		; x
+	call convert_to_offset 				; ax = `y` & bx = 'x' => dx = calculated offset
+	mov bx, dx
+
+	mov dl, byte ptr ds:[ITEM_CHAR]
+	mov ax, word ptr ds:[GRAY_SYMBOL]
+	check_rotating_item_third_loop:
+		add bx, 2 						; go right
+		cmp byte ptr es:[bx], dl
+		je block_rotating
+		cmp word ptr es:[bx], ax
+		je block_rotating
+	loop check_rotating_item_third_loop
+	jmp non_block_rotating
+
+	block_rotating:
+	mov byte ptr ds:[BLOCK_ROTATE], 1
+	jmp end_check_rotating
+
+	non_block_rotating:
+	mov byte ptr ds:[BLOCK_ROTATE], 0
+
+	end_check_rotating:
+	pop cx
+	ret
+endp
+
 rotate_item proc ;accept scan_code in `ah`
 	push ax
 	push bx
@@ -426,7 +562,10 @@ rotate_item proc ;accept scan_code in `ah`
 	xor ax, ax
 	xor bx, bx
 	xor dx, dx
-	;TODO - check limits
+	
+	call check_rotating
+	cmp byte ptr ds:[BLOCK_ROTATE], 1
+	je end_rotate_item
   	call clear_current_item
 	  
 	cmp byte ptr ds:[ITEM_ROTATE], 0
@@ -487,7 +626,8 @@ rotate_item proc ;accept scan_code in `ah`
 	inc byte ptr ds:[ITEM_ROTATE]		;set 3
   	jmp end_rotate_item
   
-  	rotate_item_third:
+	rotate_item_third:
+	; swap width and height 
 	mov al, byte ptr ds:[ITEM_WIDTH]
 	xchg al, byte ptr ds:[ITEM_HEIGHT]
 	mov byte ptr ds:[ITEM_WIDTH], al
@@ -605,6 +745,7 @@ move_item proc ;accept scan_code in `ah`
 	pop bx
 	pop ax
 	
+	mov byte ptr ds:[ITEM_ROTATE], 0
 	mov byte ptr ds:[NEW_ITEM], 1
 	
 	popa
