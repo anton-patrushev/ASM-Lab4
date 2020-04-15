@@ -7,7 +7,8 @@
 	ITEM_HEIGHT db 0
 	ITEM_WIDTH db 0
 	ITEM_X db 0
-	ITEM_Y db 0
+  	ITEM_Y db 0
+  	ITEM_ROTATE db 0 ;0 -> 1 -> 2-> 3 -> 4
 		
 	BLACK_SYMBOL db 35h,0      ;black character on black background
 	BLUE_SYMBOL db 38h,11h     ;blue character on blue background
@@ -33,7 +34,7 @@ init macro
 	FACTOR equ 2 
 
 	LEFT_LIMIT equ 1
-	RIGHT_LIMIT equ 19
+	RIGHT_LIMIT equ 21
 	  
 	mov ax, data
 	  mov ds, ax
@@ -244,10 +245,10 @@ endp
 ; done
 print_layout proc       ; prints the field
 	; call macro-wrappers
-	  call_print_rect 1, 0, 19, 1, GRAY_SYMBOL ; top
+	  call_print_rect 1, 0, RIGHT_LIMIT, 1, GRAY_SYMBOL ; top
 	  call_print_rect 0, 0, 1, 24, GRAY_SYMBOL ; left
-	  call_print_rect 19, 1, 1, 24, GRAY_SYMBOL ; right
-	  call_print_rect 0, 24, 19, 1, GRAY_SYMBOL ; bottom
+	  call_print_rect RIGHT_LIMIT, 1, 1, 24, GRAY_SYMBOL ; right
+	  call_print_rect 0, 24, RIGHT_LIMIT, 1, GRAY_SYMBOL ; bottom
 
 	 ret
 endp  
@@ -298,7 +299,7 @@ create_item proc
 	mov dh, byte ptr ds:[RED_ATTRIBUTE]
 	mov word ptr ds:[TEMP_SYMBOL], dx
 	
-	mov byte ptr ds:[ITEM_WIDTH], 4
+	mov byte ptr ds:[ITEM_WIDTH], 5
 	mov byte ptr ds:[ITEM_HEIGHT], 1
 
 	mov byte ptr ds:[ITEM_X], 8
@@ -354,21 +355,19 @@ perfom_action macro ;accept scan_code in `ah`
 	cmp ah, UP_KEY
 	je call_rotate_item
 	
-	cmp ah, DOWN_KEY
-	je call_drop_item
+	; cmp ah, DOWN_KEY
+	; je call_drop_item
 	jne call_move_item
 
 	call_rotate_item:
 		call rotate_item
-		jmp end_perfom_action
 	
 	call_move_item:
 		call move_item
 		jmp end_perfom_action
 	
-	call_drop_item:
-		call drop_item
-		jmp end_perfom_action
+	; call_drop_item:
+	; 	call drop_item
 
 	end_perfom_action:
 endm
@@ -382,8 +381,8 @@ check_for_borders proc
 	xor bx, bx
 	xor cx, cx
 
-	mov al, ds:[ITEM_Y] ; y
-  	mov bl, ds:[ITEM_X] ; x 
+	mov al, byte ptr ds:[ITEM_Y] ; y
+  	mov bl, byte ptr ds:[ITEM_X] ; x 
   	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
 	
 	mov bx, dx
@@ -420,11 +419,138 @@ check_for_borders proc
 endp
 
 rotate_item proc ;accept scan_code in `ah`
-	;rotate
+	push ax
+	push bx
+	push dx
+
+	xor ax, ax
+	xor bx, bx
+	xor dx, dx
+	;TODO - check limits
+  	call clear_current_item
+	  
+	cmp byte ptr ds:[ITEM_ROTATE], 0
+  	je rotate_item_initial
+
+  	cmp byte ptr ds:[ITEM_ROTATE], 1
+  	je rotate_item_first
+  
+  	cmp byte ptr ds:[ITEM_ROTATE], 2
+  	je rotate_item_second
+
+  	cmp byte ptr ds:[ITEM_ROTATE], 3
+  	je rotate_item_third
+  
+  	rotate_item_initial:
+	mov bl, byte ptr ds:[ITEM_WIDTH] 	;bl = h2
+	sub bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = h2 - h1
+	sub byte ptr ds:[ITEM_Y], bl		;bl = y2 = y1 + (h2 - h1)
+	
+	; swap width and height
+	mov al, byte ptr ds:[ITEM_WIDTH]
+	xchg al, byte ptr ds:[ITEM_HEIGHT]
+	mov byte ptr ds:[ITEM_WIDTH], al
+	
+	;set current rotate state
+	inc byte ptr ds:[ITEM_ROTATE]		;set 1
+  	jmp end_rotate_item
+
+	rotate_item_first:
+	mov bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = w2
+	sub bl, byte ptr ds:[ITEM_WIDTH] 	;bl = w2 - w1
+	sub byte ptr ds:[ITEM_X], bl 		;x2 = x1 - (w2 - w1)
+
+	mov bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = h1
+	sub bl, byte ptr ds:[ITEM_WIDTH] 	;bl = h1 - h2
+	add byte ptr ds:[ITEM_Y], bl		;y2 = y1 - (h1 - h2)
+	
+	; swap width and height
+	mov al, byte ptr ds:[ITEM_WIDTH]
+	xchg al, byte ptr ds:[ITEM_HEIGHT]
+	mov byte ptr ds:[ITEM_WIDTH], al
+	
+	;set current rotate state
+	inc byte ptr ds:[ITEM_ROTATE]		;set 2
+  	jmp end_rotate_item
+  
+	rotate_item_second:
+	mov bl, byte ptr ds:[ITEM_WIDTH] 	;bl = w1
+	sub bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = w1 - w2
+	add byte ptr ds:[ITEM_X], bl 		;x2 = x1 + (w1 - w2)
+
+	; swap width and height
+	mov al, byte ptr ds:[ITEM_WIDTH]
+	xchg al, byte ptr ds:[ITEM_HEIGHT]
+	mov byte ptr ds:[ITEM_WIDTH], al
+	
+	;set current rotate state
+	inc byte ptr ds:[ITEM_ROTATE]		;set 3
+  	jmp end_rotate_item
+  
+  	rotate_item_third:
+	mov al, byte ptr ds:[ITEM_WIDTH]
+	xchg al, byte ptr ds:[ITEM_HEIGHT]
+	mov byte ptr ds:[ITEM_WIDTH], al
+
+	;set current rotate state
+	mov byte ptr ds:[ITEM_ROTATE], 0	;set 0
+	
+	end_rotate_item:
+	
+	pop dx
+	pop bx
+	pop ax
+	ret
+endp
+
+check_side proc
+	push ax
+	push bx
+	push cx
+	xor ax, ax
+	xor bx, bx
+	xor cx, cx
+
+	mov al, byte ptr ds:[ITEM_Y] ; y
+	mov bl, byte ptr ds:[ITEM_X] ; x
+	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+	mov bx, dx
+	sub bx, 2
+
+	mov al, byte ptr ds:[ITEM_WIDTH]
+	mov cl, 2
+	mul cl
+	add ax, 2
+
+	mov cl, byte ptr ds:[ITEM_HEIGHT]
+	mov dl, byte ptr ds:[ITEM_CHAR]
+	check_side_height_loop:
+		cmp byte ptr es:[bx], dl
+		je disable_side_move
+
+		add bx, ax
+
+		cmp byte ptr es:[bx], dl
+		je disable_side_move
+
+		add bx, SCREEN_WIDTH
+		sub bx, ax
+	loop check_side_height_loop
+	mov dx, 0
+	jmp end_check_side
+
+	disable_side_move:
+	mov dx, 1
+
+	end_check_side:
+	pop cx
+	pop bx
+	pop ax
 	ret
 endp
 
 move_item proc ;accept scan_code in `ah`
+	pusha
 	call check_for_borders
 	cmp dx, 1
 	je create_new_item
@@ -442,12 +568,15 @@ move_item proc ;accept scan_code in `ah`
 	move_item_left:
 		cmp byte ptr ds:[ITEM_X], LEFT_LIMIT
 		jbe move_item_down
+
+		call check_side
+		cmp dx, 1
+		je move_item_down
+
 		sub byte ptr ds:[ITEM_X], 1
 		jmp move_item_down
 
 	move_item_right:
-		push dx
-		push bx
 		xor dx, dx
 		xor bx, bx
 
@@ -456,19 +585,20 @@ move_item proc ;accept scan_code in `ah`
 		add dx, bx
 
 		cmp dx, RIGHT_LIMIT
-		pop bx
-		pop dx
 		jae move_item_down
+
+		call check_side
+		cmp dx, 1
+		je move_item_down
+
 		add byte ptr ds:[ITEM_X], 1
 		jmp move_item_down		
 
-  move_item_down:
-	
+  	move_item_down:
 		add byte ptr ds:[ITEM_Y], 1
 		call print_current_item
-
-	end_move_item:
-	ret
+		popa
+		ret
 
 	create_new_item:
 	pop dx
@@ -476,13 +606,69 @@ move_item proc ;accept scan_code in `ah`
 	pop ax
 	
 	mov byte ptr ds:[NEW_ITEM], 1
+	
+	popa
 	ret
 endp
 
-drop_item proc ;accept scan_code in `ah`
-	;move_item
-	ret
-endp
+; drop_item proc ;accept scan_code in `ah`
+; 	call check_for_borders
+; 	cmp dx, 1
+; 	je create_new_item_drop
+
+; 	call clear_current_item
+
+; 	push ax
+; 	push bx
+; 	push cx
+
+; 	xor ax, ax
+; 	xor bx, bx
+; 	xor cx, cx
+
+; 	mov al, ds:[ITEM_Y] ; y
+; 	mov bl, ds:[ITEM_X] ; x
+; 	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+	
+; 	mov ax, dx
+; 	mov 
+
+; 	loop 
+
+; 	mov cl, ds:[ITEM_HEIGHT]
+
+; 	drop_item_loop:
+; 		push cx
+; 		add bx, SCREEN_WIDTH
+; 		mov cl, ds:[ITEM_WIDTH]
+
+; 		push bx
+; 		drop_item_inner_loop:
+; 			mov ax, word ptr ds:[GRAY_SYMBOL]
+; 			cmp ax, word ptr es:[bx]
+; 			je drop_item_start
+
+; 			mov al, byte ptr ds:[ITEM_CHAR]
+; 			cmp al, byte ptr es:[bx]
+; 			je drop_item_start
+
+; 			add bx, 2
+; 		loop drop_item_inner_loop
+
+; 		pop bx
+; 		pop cx
+; 	loop drop_item_loop
+	
+; 	drop_item_start:
+; 	create_new_item_drop:
+
+; 	pop cx
+; 	pop bx
+; 	pop ax
+
+; 	mov byte ptr ds:[NEW_ITEM], 1
+; 	ret
+; endp
 			
 start proc
 	init
