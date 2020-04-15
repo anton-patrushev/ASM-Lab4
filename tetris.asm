@@ -19,6 +19,8 @@
 	ELAPSED_TIME dw 0
 
 	BLOCK_ROTATE db 1
+
+	RED_SYMBOL db 23h, 44h
 .code
 jmp start
 
@@ -37,6 +39,7 @@ init macro
 
 	LEFT_LIMIT equ 1
 	RIGHT_LIMIT equ 21
+	DOWN_LIMIT equ 24
 	  
 	mov ax, data
 	  mov ds, ax
@@ -248,10 +251,11 @@ endp
 print_layout proc       ; prints the field
 	; call macro-wrappers
 	  call_print_rect 1, 0, RIGHT_LIMIT, 1, GRAY_SYMBOL ; top
-	  call_print_rect 0, 0, 1, 24, GRAY_SYMBOL ; left
-	  call_print_rect RIGHT_LIMIT, 1, 1, 24, GRAY_SYMBOL ; right
-	  call_print_rect 0, 24, RIGHT_LIMIT, 1, GRAY_SYMBOL ; bottom
+	  call_print_rect 0, 0, 1, DOWN_LIMIT, GRAY_SYMBOL ; left
+	  call_print_rect RIGHT_LIMIT, 1, 1, DOWN_LIMIT, GRAY_SYMBOL ; right
+	  call_print_rect 0, DOWN_LIMIT, RIGHT_LIMIT, 1, GRAY_SYMBOL ; bottom
 
+	  call_print_rect 4, 23, 17, 1, RED_SYMBOL ; bottom
 	 ret
 endp  
 
@@ -342,12 +346,74 @@ check_input proc 	;reads pressed key
 	
 	end_check_input:
 
-	perfom_action
+	call perfom_action
 	pop ax
 	ret
 endp
 
-perfom_action macro ;accept scan_code in `ah`
+check_completed_rows proc 
+	pusha
+	
+	mov bp, DOWN_LIMIT
+	dec bp
+	mov al, byte ptr ds:[ITEM_CHAR]
+	
+	mov cx, bp
+	check_completed_rows_loop:
+		push cx
+		mov cx, RIGHT_LIMIT
+		dec cx
+		
+		push ax
+		mov ax, bp
+		mov bx, 1
+		call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+		pop ax
+
+		mov bx, dx
+		check_completed_rows_row_loop:
+			cmp byte ptr es:[bx], al
+			jne check_completed_rows_next_row
+			add bx, 2
+		loop check_completed_rows_row_loop
+		; mov bx, dx
+		; mov dx, RIGHT_LIMIT
+		; add dx, RIGHT_LIMIT
+		; sub dx, 2
+		; sub bx, dx
+
+		mov bx, dx
+		call_clear_rect 1, bp, 20, 1
+		
+		push ds
+		push es
+		pop ds
+
+		push bp
+		check_completed_rows_shift:
+			mov di, bx ; di on cleaning row
+			sub bx, SCREEN_WIDTH
+			mov si, bx ; si on previous row
+
+			mov cx, 20
+			rep movsw ; shift down string
+			
+			dec bp
+			cmp bp, 1
+		ja check_completed_rows_shift
+		pop bp	
+		pop ds
+
+		check_completed_rows_next_row:
+		dec bp ; y = y-1
+		pop cx
+	loop check_completed_rows_loop
+
+	popa
+	ret
+endp
+
+perfom_action proc ;accept scan_code in `ah`
 	cmp ah, LEFT_KEY ;compare scan code
 	je call_move_item
 	
@@ -372,8 +438,11 @@ perfom_action macro ;accept scan_code in `ah`
 	; call_drop_item:
 	; 	call drop_item
 
+	call check_completed_rows
+
 	end_perfom_action:
-endm
+	ret
+endp
 
 check_for_borders proc
 	push ax
@@ -747,7 +816,8 @@ move_item proc ;accept scan_code in `ah`
 	
 	mov byte ptr ds:[ITEM_ROTATE], 0
 	mov byte ptr ds:[NEW_ITEM], 1
-	
+	call check_completed_rows
+
 	popa
 	ret
 endp
