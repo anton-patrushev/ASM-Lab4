@@ -4,6 +4,7 @@
 .data
 	NEW_ITEM db 1 ;flag for creating new item
 	RANDOM_NUMBER db 0
+	ITEM_MODEL db 0
 	ITEM_HEIGHT db 0
 	ITEM_WIDTH db 0
 	ITEM_X db 0
@@ -15,12 +16,14 @@
 	GRAY_SYMBOL db 30h,77h     ;gray character in gray background, attribute 0111 0111
 	ITEM_CHAR db 23h
 	RED_ATTRIBUTE db 44h
+	GREEN_ATTRIBUTE db 22h
+	BLUE_ATTRIBUTE db 33h
 	TEMP_SYMBOL dw 0    
 	ELAPSED_TIME dw 0
-
 	BLOCK_ROTATE db 1
-
 	RED_SYMBOL db 23h, 44h
+
+	GAME_OVER db 0
 .code
 jmp start
 
@@ -42,14 +45,14 @@ init macro
 	DOWN_LIMIT equ 24
 	  
 	mov ax, data
-	  mov ds, ax
+	mov ds, ax
   
 	mov ah,00h
-	  mov al,3
-	  int 10h
+	mov al,3
+	int 10h
 
-	  mov ax,0B800h
-	  mov es,ax
+	mov ax,0B800h
+	mov es,ax
 endm
 
 random proc ;generate random number from 0 to 2 in store it in RANDOM_NUMBER
@@ -66,66 +69,64 @@ random proc ;generate random number from 0 to 2 in store it in RANDOM_NUMBER
 endp
 
 print_rect proc        ; accepts X and Y - initial coordinates, width, height of the rectangle, char and attribute in one parameter 
-	  push bp
-	  mov bp, sp
-
-	  ; now [bp + 2] = call ret adress
+	push bp
+	mov bp, sp
+	; now [bp + 2] = call ret adress
 	; [bp + 4] = symbol
 	; [bp + 6] = height
-	  ; [bp + 8] = width
-	  ; [bp + 10] = y
-	  ; [bp + 12] = x  
+	; [bp + 8] = width
+	; [bp + 10] = y
+	; [bp + 12] = x  
+	push ax
+	push bx  
+	push cx
+	push dx
+	push di
 
-	  push ax
-	  push bx  
-	  push cx
-	  push dx
-	  push di
-  
-	  mov ax, [bp + 10] ; y
-	  mov bx, [bp + 12] ; x 
-	  call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
-	  mov di, dx
-	
-	  mov ax, [bp + 4] ; ax = ascii char + attribute
-	  mov cx, [bp + 6] ; cx = height
-	
-	  print_rect_loop:  
+	mov ax, [bp + 10] ; y
+	mov bx, [bp + 12] ; x 
+	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+	mov di, dx
+
+	mov ax, [bp + 4] ; ax = ascii char + attribute
+	mov cx, [bp + 6] ; cx = height
+
+	print_rect_loop:  
 		push cx
 		mov cx, [bp + 8] ; cx = width
-   
+
 		push di
 		rep stosw
 		pop di
-	
+
 		add di, SCREEN_WIDTH
-	
+
 		pop cx
-	  loop print_rect_loop
-	
-	  pop di
-	  pop dx
-	  pop cx
-	  pop bx
-	  pop ax
-	  pop bp
-	  ret
+	loop print_rect_loop
+
+	pop di
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	pop bp
+	ret
 endp
 
 call_print_rect macro x, y, width, height, symbol
-	  push x                 ;X coordinate
-	  push y                 ;Y coordinate
-	  push width             ;width of the rectangle
-	  push height            ;height of the rectangle
-	  push word ptr symbol   ;char with attribute
+	push x                 ;X coordinate
+	push y                 ;Y coordinate
+	push width             ;width of the rectangle
+	push height            ;height of the rectangle
+	push word ptr symbol   ;char with attribute
   
-	 call print_rect
+	call print_rect
 
-	  pop dx
-	  pop dx
-	  pop dx
-	  pop dx
-	  pop dx
+	pop dx
+	pop dx
+	pop dx
+	pop dx
+	pop dx
 endm
 
 print_current_item proc
@@ -153,8 +154,8 @@ clear_rect proc
 	
 	; [bp + 2] = call ret adress
 	; [bp + 4] = height
-	  ; [bp + 6] = width
-	  ; [bp + 8] = y
+	; [bp + 6] = width
+	; [bp + 8] = y
 	; [bp + 10] = x
 	  
 	push ax
@@ -287,6 +288,9 @@ app proc
 
 	call create_item
 
+	cmp byte ptr ds:[GAME_OVER], 1
+	je app_game_over
+
 	app_skip_drawing:
 	call check_input
 
@@ -294,23 +298,63 @@ app proc
 	ret
 endp
 
-create_item proc
-	;generate random number
-	;choose item model
-	;mocked model is 0 (4 x char line)
+;description
+select_item_model proc
 	push dx
 	xor dx, dx
-	
+
+	cmp byte ptr ds:[RANDOM_NUMBER], 0
+	je select_first_model
+
+	cmp byte ptr ds:[RANDOM_NUMBER], 1
+	je select_second_model
+
+	cmp byte ptr ds:[RANDOM_NUMBER], 2
+	je select_third_model
+
+	;___________1-st model___________________
+	select_first_model:	
 	mov dl, byte ptr ds:[ITEM_CHAR]
 	mov dh, byte ptr ds:[RED_ATTRIBUTE]
 	mov word ptr ds:[TEMP_SYMBOL], dx
 	
 	mov byte ptr ds:[ITEM_WIDTH], 3
 	mov byte ptr ds:[ITEM_HEIGHT], 1
+	jmp end_select_model
+	
+	;___________2-nd model___________________
+	select_second_model:	
+	mov dl, byte ptr ds:[ITEM_CHAR]
+	mov dh, byte ptr ds:[GREEN_ATTRIBUTE]
+	mov word ptr ds:[TEMP_SYMBOL], dx
+	
+	mov byte ptr ds:[ITEM_WIDTH], 2
+	mov byte ptr ds:[ITEM_HEIGHT], 2
+	jmp end_select_model
+
+	;___________3-rd model___________________
+	select_third_model:	
+	mov dl, byte ptr ds:[ITEM_CHAR]
+	mov dh, byte ptr ds:[BLUE_ATTRIBUTE]
+	mov word ptr ds:[TEMP_SYMBOL], dx
+	
+	mov byte ptr ds:[ITEM_WIDTH], 2
+	mov byte ptr ds:[ITEM_HEIGHT], 1
+	jmp end_select_model
+
+	end_select_model:
+	pop dx
+	ret
+endp
+
+create_item proc
+	call random
+	call select_item_model
+	;choose item model
+	;mocked model is 0 (4 x char line)
 
 	mov byte ptr ds:[ITEM_X], 8
 	mov byte ptr ds:[ITEM_Y], 1
-
 	pusha
 
 	xor ax, ax
@@ -323,13 +367,21 @@ create_item proc
 	mov cl, byte ptr ds:[ITEM_WIDTH]
 	mov dl, byte ptr ds:[ITEM_HEIGHT]
 
-
+	push dx
+	call check_for_borders
+	cmp dx, 1
+	je create_item_error
+	pop dx
 	call_print_rect ax, bx, cx, dx, TEMP_SYMBOL
 
-	popa
-
-	pop dx
 	mov byte ptr ds:[NEW_ITEM], 0 ;disable drawing new item
+	popa
+	ret
+
+	create_item_error:
+	mov byte ptr ds:[NEW_ITEM], 0 ;disable drawing new item
+	mov byte ptr ds:[GAME_OVER], 1 ;set GAME_OVER
+	popa
 	ret
 endp
 
@@ -444,7 +496,7 @@ perfom_action proc ;accept scan_code in `ah`
 	ret
 endp
 
-check_for_borders proc
+check_for_borders proc ;set `dx` to 1, if there are borders near item
 	push ax
 	push bx
 	push cx
@@ -888,6 +940,7 @@ start proc
 	   call app
 	jmp game_loop
 
+	app_game_over:
 	exit
 	ret
 endp
