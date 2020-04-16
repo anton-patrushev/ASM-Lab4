@@ -8,8 +8,8 @@
 	ITEM_HEIGHT db 0
 	ITEM_WIDTH db 0
 	ITEM_X db 0
-  	ITEM_Y db 0
-  	ITEM_ROTATE db 0 ;0 -> 1 -> 2-> 3 -> 4
+		ITEM_Y db 0
+		ITEM_ROTATE db 0 ;0 -> 1 -> 2-> 3 -> 4
 		
 	BLACK_SYMBOL db 35h,0      ;black character on black background
 	BLUE_SYMBOL db 38h,11h     ;blue character on blue background
@@ -23,7 +23,8 @@
 	BLOCK_ROTATE db 1
 	RED_SYMBOL db 23h, 44h
 
-	GAME_OVER db 0
+    GAME_OVER db 0
+
 .code
 jmp start
 
@@ -43,10 +44,10 @@ init macro
 	LEFT_LIMIT equ 1
 	RIGHT_LIMIT equ 21
 	DOWN_LIMIT equ 24
-	  
+		
 	mov ax, data
 	mov ds, ax
-  
+	
 	mov ah,00h
 	mov al,3
 	int 10h
@@ -119,7 +120,7 @@ call_print_rect macro x, y, width, height, symbol
 	push width             ;width of the rectangle
 	push height            ;height of the rectangle
 	push word ptr symbol   ;char with attribute
-  
+	
 	call print_rect
 
 	pop dx
@@ -157,13 +158,13 @@ clear_rect proc
 	; [bp + 6] = width
 	; [bp + 8] = y
 	; [bp + 10] = x
-	  
+		
 	push ax
 	push bx  
 	push cx
 	push dx
 	push di
-  
+	
 mov ax, [bp + 8] ; y
 	mov bx, [bp + 10] ; x 
 	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
@@ -175,7 +176,7 @@ mov ax, [bp + 8] ; y
 	clear_rect_loop:  
 		push cx
 		mov cx, [bp + 6] ; cx = width
-   
+	 
 		push di
 		rep stosw
 		pop di
@@ -196,16 +197,16 @@ endp
 
 call_clear_rect macro x, y, width, height
 	push x                 ;X coordinate
-	  push y                 ;Y coordinate
-	  push width             ;width of the rectangle
-	  push height            ;height of the rectangle
-  
+		push y                 ;Y coordinate
+		push width             ;width of the rectangle
+		push height            ;height of the rectangle
+	
 	 call clear_rect
 
-	  pop dx
-	  pop dx
-	  pop dx
-	  pop dx
+		pop dx
+		pop dx
+		pop dx
+		pop dx
 endm
 
 clear_current_item proc
@@ -256,8 +257,8 @@ print_layout proc       ; prints the field
 	call_print_rect RIGHT_LIMIT, 1, 1, DOWN_LIMIT, GRAY_SYMBOL ; right
 	call_print_rect 0, DOWN_LIMIT, RIGHT_LIMIT, 1, GRAY_SYMBOL ; bottom
 
-	; call_print_rect 4, 23, 17, 1, RED_SYMBOL ; mock
-	 ret
+	call_print_rect 8, 6, 1, 18, RED_SYMBOL ; mock
+	ret
 endp  
 
 clear_screen macro
@@ -268,8 +269,8 @@ endm
 
 exit macro
 	clear_screen
-	  mov ax, 4c00h
-	  int 21h
+		mov ax, 4c00h
+		int 21h
 endm
 
 app proc
@@ -355,17 +356,6 @@ create_item proc
 
 	mov byte ptr ds:[ITEM_X], 8
 	mov byte ptr ds:[ITEM_Y], 1
-	pusha
-
-	xor ax, ax
-	xor bx, bx
-	xor cx, cx
-	xor dx, dx
-	
-	mov al, byte ptr ds:[ITEM_X]
-	mov bl, byte ptr ds:[ITEM_Y]
-	mov cl, byte ptr ds:[ITEM_WIDTH]
-	mov dl, byte ptr ds:[ITEM_HEIGHT]
 
 	push dx
 	call check_for_borders
@@ -375,13 +365,12 @@ create_item proc
 	call_print_rect ax, bx, cx, dx, TEMP_SYMBOL
 
 	mov byte ptr ds:[NEW_ITEM], 0 ;disable drawing new item
-	popa
 	ret
 
-	create_item_error:
+    create_item_error:
+    pop dx
 	mov byte ptr ds:[NEW_ITEM], 0 ;disable drawing new item
 	mov byte ptr ds:[GAME_OVER], 1 ;set GAME_OVER
-	popa
 	ret
 endp
 
@@ -506,8 +495,8 @@ check_for_borders proc ;set `dx` to 1, if there are borders near item
 	xor cx, cx
 
 	mov al, byte ptr ds:[ITEM_Y] ; y
-  	mov bl, byte ptr ds:[ITEM_X] ; x 
-  	call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
+		mov bl, byte ptr ds:[ITEM_X] ; x 
+		call convert_to_offset ; ax = `y` & bx = 'x' => dx = calculated offset
 	
 	mov bx, dx
 	xor dx, dx
@@ -547,15 +536,15 @@ check_rotating proc
 	xor cx, cx
 
 	cmp byte ptr ds:[ITEM_ROTATE], 0
-  	je check_rotating_item_initial
+		je check_rotating_item_initial
 
-  	cmp byte ptr ds:[ITEM_ROTATE], 1
-  	je check_rotating_item_first
-  
-  	cmp byte ptr ds:[ITEM_ROTATE], 2
-  	je check_rotating_item_second
+		cmp byte ptr ds:[ITEM_ROTATE], 1
+		je check_rotating_item_first
+	
+		cmp byte ptr ds:[ITEM_ROTATE], 2
+		je check_rotating_item_second
 
-  	cmp byte ptr ds:[ITEM_ROTATE], 3
+		cmp byte ptr ds:[ITEM_ROTATE], 3
 	je check_rotating_item_third
 	
 	; _____________________0 -> 1_______________________________________
@@ -611,7 +600,7 @@ check_rotating proc
 		je block_rotating
 	loop check_rotating_item_first_loop
 	jmp non_block_rotating
-  
+	
 	; _____________________2 -> 3_______________________________________
 	check_rotating_item_second:
 	mov bl, byte ptr ds:[ITEM_WIDTH] 	;bl = h2
@@ -640,7 +629,7 @@ check_rotating proc
 		je block_rotating
 	loop check_rotating_item_second_loop
 	jmp non_block_rotating
-  
+	
 	; _____________________3 -> 0_______________________________________
 	check_rotating_item_third:
 	mov bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = w2
@@ -687,21 +676,21 @@ rotate_item proc ;accept scan_code in `ah`
 	call check_rotating
 	cmp byte ptr ds:[BLOCK_ROTATE], 1
 	je end_rotate_item
-  	call clear_current_item
-	  
+		call clear_current_item
+		
 	cmp byte ptr ds:[ITEM_ROTATE], 0
-  	je rotate_item_initial
+		je rotate_item_initial
 
-  	cmp byte ptr ds:[ITEM_ROTATE], 1
-  	je rotate_item_first
-  
-  	cmp byte ptr ds:[ITEM_ROTATE], 2
-  	je rotate_item_second
+		cmp byte ptr ds:[ITEM_ROTATE], 1
+		je rotate_item_first
+	
+		cmp byte ptr ds:[ITEM_ROTATE], 2
+		je rotate_item_second
 
-  	cmp byte ptr ds:[ITEM_ROTATE], 3
-  	je rotate_item_third
-  
-  	rotate_item_initial:
+		cmp byte ptr ds:[ITEM_ROTATE], 3
+		je rotate_item_third
+	
+		rotate_item_initial:
 	mov bl, byte ptr ds:[ITEM_WIDTH] 	;bl = h2
 	sub bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = h2 - h1
 	sub byte ptr ds:[ITEM_Y], bl		;bl = y2 = y1 + (h2 - h1)
@@ -713,7 +702,7 @@ rotate_item proc ;accept scan_code in `ah`
 	
 	;set current rotate state
 	inc byte ptr ds:[ITEM_ROTATE]		;set 1
-  	jmp end_rotate_item
+		jmp end_rotate_item
 
 	rotate_item_first:
 	mov bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = w2
@@ -731,8 +720,8 @@ rotate_item proc ;accept scan_code in `ah`
 	
 	;set current rotate state
 	inc byte ptr ds:[ITEM_ROTATE]		;set 2
-  	jmp end_rotate_item
-  
+		jmp end_rotate_item
+	
 	rotate_item_second:
 	mov bl, byte ptr ds:[ITEM_WIDTH] 	;bl = w1
 	sub bl, byte ptr ds:[ITEM_HEIGHT] 	;bl = w1 - w2
@@ -745,8 +734,8 @@ rotate_item proc ;accept scan_code in `ah`
 	
 	;set current rotate state
 	inc byte ptr ds:[ITEM_ROTATE]		;set 3
-  	jmp end_rotate_item
-  
+		jmp end_rotate_item
+	
 	rotate_item_third:
 	; swap width and height 
 	mov al, byte ptr ds:[ITEM_WIDTH]
@@ -855,7 +844,7 @@ move_item proc ;accept scan_code in `ah`
 		add byte ptr ds:[ITEM_X], 1
 		jmp move_item_down		
 
-  	move_item_down:
+		move_item_down:
 		add byte ptr ds:[ITEM_Y], 1
 		call print_current_item
 		popa
@@ -937,7 +926,7 @@ start proc
 	init
 	call print_layout
 	game_loop: ;endless loop
-	   call app
+	    call app
 	jmp game_loop
 
 	app_game_over:
