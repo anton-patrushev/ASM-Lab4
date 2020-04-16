@@ -8,8 +8,8 @@
 	ITEM_HEIGHT db 0
 	ITEM_WIDTH db 0
 	ITEM_X db 0
-		ITEM_Y db 0
-		ITEM_ROTATE db 0 ;0 -> 1 -> 2-> 3 -> 4
+	ITEM_Y db 0
+	ITEM_ROTATE db 0 ;0 -> 1 -> 2-> 3 -> 4
 		
 	BLACK_SYMBOL db 35h,0      ;black character on black background
 	BLUE_SYMBOL db 38h,11h     ;blue character on blue background
@@ -38,7 +38,7 @@ init macro
 	SCREEN_WIDTH equ 0A0h       ;screen width in bytes (dec: 80 x 2 = 160) 
 	SCREEN_HEIGHT equ 19h       ;screen height in characters (dec: 25)
 	
-	DELAY equ 2
+	DELAY equ 3
 	FACTOR equ 2 
 
 	LEFT_LIMIT equ 1
@@ -257,7 +257,7 @@ print_layout proc       ; prints the field
 	call_print_rect RIGHT_LIMIT, 1, 1, DOWN_LIMIT, GRAY_SYMBOL ; right
 	call_print_rect 0, DOWN_LIMIT, RIGHT_LIMIT, 1, GRAY_SYMBOL ; bottom
 
-	call_print_rect 8, 6, 1, 18, RED_SYMBOL ; mock
+	; call_print_rect 8, 6, 1, 18, RED_SYMBOL ; mock
 	ret
 endp  
 
